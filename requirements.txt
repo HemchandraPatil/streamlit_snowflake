@@ -1,3 +1,6 @@
-snowflake-connector-python
+snowflake
 pandas
 python
+URLError
+streamlit
+requests
