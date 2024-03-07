@@ -96,25 +96,25 @@ if(status=='External Stage(S3)'):
         #For practice purpose
         st.markdown('----------------------')
 
-        if st.session_state.clicked:
-            #Multiselect
-            st.subheader("Data Profiling")
-            column_names = st.multiselect('Please select any column:',df_sql_columns)
-            #st.write("Selected Columns : ",column_names)
+        
+        #Multiselect
+        st.subheader("Data Profiling")
+        column_names = st.multiselect('Please select any column:',df_sql_columns)
+        st.write("Selected Columns : ",column_names)
+#         if 'Onclicked' not in st.session_state:
+#             st.session_state.Onclicked = False
+# # 
+#         def click_button1():
+#             st.session_state.Onclicked = True
+# # 
+#         st.button('SUBMIT', on_click=click_button1, type = 'primary')
+#         if st.session_state.Onclicked:
+#             st.write("Selected Columns : ",column_names)
+        
 
-        # container = st.beta_container()
-        # all = st.checkbox("Select all")
-        # if all:
-        #     selected_options = container.multiselect('Please select any column:',df_sql_columns)
-        # else:
-        #     selected_options = container.multiselect('Please select any column:',df_sql_columns)
-                    
-
-
-
-
-#df2 = pd.DataFrame(df_sql_select)
-#st.write(df2.head(5))
+        #columns names
+        df1 = pd.DataFrame(df_sql_columns)
+        st.write(df1)
 
 #st.session_state.clicked = False
     
