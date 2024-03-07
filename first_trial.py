@@ -30,15 +30,15 @@ else:
 #con=st.connection("snowflake")
 #df=con.query("select 1 from dual")
 if (status == 'Internal Satge'):
-    session = get_active_session()
+#   session = get_active_session()
     st.subheader("There are no files in Internal Stage")
 
 if (status == 'Named Stage'):
-    session = get_active_session()
+#   session = get_active_session()
     st.subheader("There are no files in Named Stage")
 
 if(status=='External Stage(S3)'):
-    session = get_active_session()
+    #session = get_active_session()
 
     st.subheader("External Stage Files:")
     
@@ -76,30 +76,47 @@ if(status=='External Stage(S3)'):
     if st.session_state.clicked:
         # The message and nested widget will remain on the page
         st.write("You have selected",files)
-        sql_pull=f" SELECT $1,$2,$3,$4,$5,$6,$7,$8 FROM @AWS_S3_STG/{files};"
-        #st.write(sql_pull)
-        df_pull = session.sql(sql_pull).collect()
-        #st.dataframe(data=df_pull,use_container_width=True)
-        st.write((df_pull))
+        #extract the table name from file name
+        table_name = files.replace(' ', '')[:-4].upper()
 
-        #Multiselect
+        #sql_pull=f" SELECT $1,$2,$3,$4,$5,$6,$7,$8 FROM @AWS_S3_STG/{files};"
+        sql_truncate = f"TRUNCATE TABLE STORE_DB.ATLAS.{table_name};"
+        session.sql(sql_truncate).collect()
+        sql_copy = f"COPY INTO STORE_DB.ATLAS.{table_name} FROM @STORE_DB.ATLAS.AWS_S3_STG/{files} FILE_FORMAT=F1"
+        session.sql(sql_copy).collect()
+        sql_select = f"select * from STORE_DB.ATLAS.{table_name}"
+        df_sql_select = session.sql(sql_select).collect()
+        #st.write(df_sql_select)
+        dataframe_select = st.dataframe(df_sql_select)
+
+        #Column Names
+        sql_columns = f"select column_name from information_schema.columns where table_name = '{table_name}' and table_schema = 'ATLAS';"
+        df_sql_columns = session.sql(sql_columns).collect()
+
+        #For practice purpose
+        st.markdown('----------------------')
+
         if st.session_state.clicked:
-            session = get_active_session()
-            #data_stored = st.write(df_pull[0][:])
-            data_stored = df_pull[0][:]
-            st.write(data_stored[1])
-            ss=len(data_stored)
-            column_names = st.multiselect('Please select any column:',data_stored)
-            st.write(column_names)
-            st.write(ss)
+            #Multiselect
+            st.subheader("Data Profiling")
+            column_names = st.multiselect('Please select any column:',df_sql_columns)
+            #st.write("Selected Columns : ",column_names)
 
-    
-    #For practice purpose
-    st.markdown('----------------------')
+        # container = st.beta_container()
+        # all = st.checkbox("Select all")
+        # if all:
+        #     selected_options = container.multiselect('Please select any column:',df_sql_columns)
+        # else:
+        #     selected_options = container.multiselect('Please select any column:',df_sql_columns)
+                    
 
-    #data_stored = st.dataframe(df_pull, use_container_width=True)
-    #st.write((df_pull[0].tolist())
-    #st.session_state.clicked = False
+
+
+
+#df2 = pd.DataFrame(df_sql_select)
+#st.write(df2.head(5))
+
+#st.session_state.clicked = False
     
     
     
