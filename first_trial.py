@@ -99,10 +99,41 @@ if(status=='External Stage(S3)'):
         
         #Multiselect
         st.subheader("Data Profiling")
-        column_names = st.multiselect('Please select any column:',df_sql_columns)
-        st.write("Selected Columns : ",column_names)
+        #@st.cache
+        #column_names = st.multiselect('Please select any column:',df_sql_columns)
+        #st.write("Selected Columns : ",column_names)
 #         if 'Onclicked' not in st.session_state:
 #             st.session_state.Onclicked = False
+
+        #Checkbox
+        df1 = pd.DataFrame(df_sql_columns)
+        #to get the column names
+        for i in range(len(df1)):
+            select_column = st.checkbox(df1.iloc[i][0])
+        
+        def checkbox_container(data):
+            select_column_box = st.text_input('Please select any column')
+            cols = st.columns(10)
+            if cols[0].button('Select All'):
+                for n in data:
+                    st.session_state['dynamic_checkbox_' + n] = True
+                st.experimental_rerun()
+            if cols[1].button('UnSelect All'):
+                for n in data:
+                    st.session_state['dynamic_checkbox_' + n] = False
+                st.experimental_rerun()
+            for i in data:
+                st.checkbox(i, key='dynamic_checkbox_' + i)
+            #st.checkbox(i, key='dynamic_checkbox_' + i)
+            
+        def get_selected_checkboxes():
+            return [i.replace('dynamic_checkbox_','') for i in st.session_state.keys() if i.startswith('dynamic_checkbox_') and st.session_state[i]]
+
+        checkbox_container(select_column)
+        st.write('You selected:')
+        st.write(get_selected_checkboxes())
+
+        
 # # 
 #         def click_button1():
 #             st.session_state.Onclicked = True
@@ -113,10 +144,7 @@ if(status=='External Stage(S3)'):
         
 
         #columns names
-        df1 = pd.DataFrame(df_sql_columns)
-        st.write(df1)
+        #df1 = pd.DataFrame(df_sql_columns)
+        #st.write(df1)
 
-#st.session_state.clicked = False
-    
-    
-    
+#st.session_state.clicked = False 
