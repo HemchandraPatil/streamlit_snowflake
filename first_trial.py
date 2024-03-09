@@ -108,30 +108,34 @@ if(status=='External Stage(S3)'):
         #Checkbox
         df1 = pd.DataFrame(df_sql_columns)
         #to get the column names
-        for i in range(len(df1)):
-            select_column = st.checkbox(df1.iloc[i][0])
-        
+        #select_column_box = st.text_input('Please select any column')
+        # for i in df1['COLUMN_NAME']:
+        #     select_column = st.checkbox(i)
+
+
         def checkbox_container(data):
-            select_column_box = st.text_input('Please select any column')
+            #select_column_box = st.text_input('Please select any column')
             cols = st.columns(10)
-            if cols[0].button('Select All'):
-                for n in data:
-                    st.session_state['dynamic_checkbox_' + n] = True
+            if cols[0].button('Select All', type = 'primary'):
+                for i in data['COLUMN_NAME']:
+                    st.session_state['dynamic_checkbox_' + i] = True
                 st.experimental_rerun()
-            if cols[1].button('UnSelect All'):
-                for n in data:
-                    st.session_state['dynamic_checkbox_' + n] = False
+            if cols[1].button('UnSelect All',type='primary'):
+                for i in data['COLUMN_NAME']:
+                    st.session_state['dynamic_checkbox_' + i] = False
                 st.experimental_rerun()
-            for i in data:
-                st.checkbox(i, key='dynamic_checkbox_' + i)
-            #st.checkbox(i, key='dynamic_checkbox_' + i)
+            for i in data['COLUMN_NAME']:
+                	st.checkbox(i, key='dynamic_checkbox_' + i)
             
         def get_selected_checkboxes():
             return [i.replace('dynamic_checkbox_','') for i in st.session_state.keys() if i.startswith('dynamic_checkbox_') and st.session_state[i]]
 
-        checkbox_container(select_column)
+        checkbox_container(df1)
         st.write('You selected:')
         st.write(get_selected_checkboxes())
+
+       
+        
 
         
 # # 
