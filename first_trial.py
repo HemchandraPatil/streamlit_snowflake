@@ -108,11 +108,8 @@ if(status=='External Stage(S3)'):
         #Checkbox
         df1 = pd.DataFrame(df_sql_columns)
         #to get the column names
-        #select_column_box = st.text_input('Please select any column')
-        # for i in df1['COLUMN_NAME']:
-        #     select_column = st.checkbox(i)
 
-
+        #Function to create checkbox
         def checkbox_container(data):
             #select_column_box = st.text_input('Please select any column')
             cols = st.columns(5)
@@ -126,12 +123,12 @@ if(status=='External Stage(S3)'):
                 st.experimental_rerun()
             for i in data['COLUMN_NAME']:
                 	st.checkbox(i, key='dynamic_checkbox_' + i)
-            
+
+        #Function to print selected columns    
         def get_selected_checkboxes():
             return [i.replace('dynamic_checkbox_','') for i in st.session_state.keys() if i.startswith('dynamic_checkbox_') and st.session_state[i]]
 
         checkbox_container(df1)
-        #st.write('You selected:')
         new_data = st.text_input('You selected',get_selected_checkboxes())
         #st.write(get_selected_checkboxes())
 
@@ -146,10 +143,5 @@ if(status=='External Stage(S3)'):
 #         st.button('SUBMIT', on_click=click_button1, type = 'primary')
 #         if st.session_state.Onclicked:
 #             st.write("Selected Columns : ",column_names)
-        
-
-        #columns names
-        #df1 = pd.DataFrame(df_sql_columns)
-        #st.write(df1)
 
 #st.session_state.clicked = False 
