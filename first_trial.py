@@ -99,6 +99,7 @@ if(status=='External Stage(S3)'):
         
         #Multiselect
         st.subheader("Data Profiling")
+        st.caption('Please select any one column')
         #@st.cache
         #column_names = st.multiselect('Please select any column:',df_sql_columns)
         #st.write("Selected Columns : ",column_names)
@@ -106,7 +107,7 @@ if(status=='External Stage(S3)'):
 #             st.session_state.Onclicked = False
 
         #Checkbox
-        df1 = pd.DataFrame(df_sql_columns)
+        df_columns = pd.DataFrame(df_sql_columns)
         #to get the column names
 
         #Function to create checkbox
@@ -128,7 +129,7 @@ if(status=='External Stage(S3)'):
         def get_selected_checkboxes():
             return [i.replace('dynamic_checkbox_','') for i in st.session_state.keys() if i.startswith('dynamic_checkbox_') and st.session_state[i]]
 
-        checkbox_container(df1)
+        checkbox_container(df_columns)
         new_data = st.text_input('You selected',get_selected_checkboxes())
         #st.write(get_selected_checkboxes())
 
