@@ -115,7 +115,7 @@ if(status=='External Stage(S3)'):
 
         def checkbox_container(data):
             #select_column_box = st.text_input('Please select any column')
-            cols = st.columns(10)
+            cols = st.columns(5)
             if cols[0].button('Select All', type = 'primary'):
                 for i in data['COLUMN_NAME']:
                     st.session_state['dynamic_checkbox_' + i] = True
@@ -131,8 +131,9 @@ if(status=='External Stage(S3)'):
             return [i.replace('dynamic_checkbox_','') for i in st.session_state.keys() if i.startswith('dynamic_checkbox_') and st.session_state[i]]
 
         checkbox_container(df1)
-        st.write('You selected:')
-        st.write(get_selected_checkboxes())
+        #st.write('You selected:')
+        new_data = st.text_input('You selected',get_selected_checkboxes())
+        #st.write(get_selected_checkboxes())
 
        
         
