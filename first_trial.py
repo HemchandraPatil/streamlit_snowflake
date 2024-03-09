@@ -92,6 +92,7 @@ if(status=='External Stage(S3)'):
         #Column Names
         sql_columns = f"select column_name from information_schema.columns where table_name = '{table_name}' and table_schema = 'ATLAS';"
         df_sql_columns = session.sql(sql_columns).collect()
+        df_columns = pd.DataFrame(df_sql_columns)
 
         #For practice purpose
         st.markdown('----------------------')
@@ -107,9 +108,6 @@ if(status=='External Stage(S3)'):
 #             st.session_state.Onclicked = False
 
         #Checkbox
-        df_columns = pd.DataFrame(df_sql_columns)
-        #to get the column names
-
         #Function to create checkbox
         def checkbox_container(data):
             #select_column_box = st.text_input('Please select any column')
@@ -132,6 +130,17 @@ if(status=='External Stage(S3)'):
         checkbox_container(df_columns)
         new_data = st.text_input('You selected',get_selected_checkboxes())
         #st.write(get_selected_checkboxes())
+
+        selected_column = get_selected_checkboxes()
+
+        for values in selected_column:
+            st.write(values)
+        #sql query to preview the data for selected columns
+        select_sql = f"select {values} from {table_name} limit 5"
+        collect_select_sql = session.sql(select_sql).collect()
+        df_select_sql = pd.DataFrame(collect_select_sql)
+        st.write(df_select_sql)
+        
 
        
         
