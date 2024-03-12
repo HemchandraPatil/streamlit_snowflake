@@ -6,6 +6,8 @@ import snowflake.connector
 from urllib.error import URLError
 import streamlit as st
 from snowflake.snowpark.context import get_active_session
+#from ydata_profiling import pandas_profiling as pf
+#from pydantic_settings import BaseSettings
 
 # if 'layout_preference' not in st.session_state:
 #     st.session_state['layout_preference'] = 'wide'
@@ -16,7 +18,7 @@ def create_session():
 
 session = create_session()
 
-st.image('saama_logo.png', caption = "Saama's Logo")
+#st.image('saama_logo.png', caption = "Saama's Logo")
 # Write directly to the app
 st.title("Welcome to Streamlit in Snowflake")
 st.header("Saama Thunder's") 
@@ -75,7 +77,7 @@ if(status=='External Stage(S3)'):
     def click_button():
         st.session_state.clicked = True
 
-    st.button('PREVIEW', on_click=click_button, type = 'primary')
+    st.button('PREVIEW', on_click=click_button)
 
     #Preview code
     if st.session_state.clicked:
@@ -144,10 +146,26 @@ if(status=='External Stage(S3)'):
         for values in selected_column:
             #sql query to preview the data for selected columns
             # to show the distinct records
+            #values2 = f"values.append({values})"
             select_sql = f"select distinct {values} from {table_name}"
             collect_select_sql = session.sql(select_sql).collect()
             df_select_sql = pd.DataFrame(collect_select_sql)
             st.write(df_select_sql)
+
+            #sf_select_sql_final = sf_select_sql_final || df_select_sql
+
+            # report = pf.ProfileReport(df_select_sql)
+            # st.write(report)
+        
+        select_sql = f"select {values},count(*) as Total from {table_name} group by {values}"
+        collect_select_sql = session.sql(select_sql).collect()
+        df_select_sql = pd.DataFrame(collect_select_sql)
+        st.write(df_select_sql)
+        
+        # x_col = df_select_sql['CITY']
+        # y_col = df_select_sql['TOTAL']
+        # chart_data = st.bar_chart(df_select_sql, x= x_col[1],y=y_col)
+        # st.write(chart_data)
 
         col1, col2 = st.columns(2)
         try:
@@ -164,9 +182,8 @@ if(status=='External Stage(S3)'):
                 collect_count_sql = session.sql(count_sql).collect()
                 df_count_sql = pd.DataFrame(collect_count_sql)
                 st.write(df_count_sql)
-
-        except : 
-            st.write("No columns selected")    
+        except:
+            st.write("No columns selected")  
 
         
             
