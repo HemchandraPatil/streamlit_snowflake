@@ -16,6 +16,7 @@ def create_session():
 
 session = create_session()
 
+st.image('saama_logo.png', caption = "Saama's Logo")
 # Write directly to the app
 st.title("Welcome to Streamlit in Snowflake")
 st.header("Saama Thunder's") 
