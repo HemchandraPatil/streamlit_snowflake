@@ -7,6 +7,10 @@ from urllib.error import URLError
 import streamlit as st
 from snowflake.snowpark.context import get_active_session
 
+# if 'layout_preference' not in st.session_state:
+#     st.session_state['layout_preference'] = 'wide'
+#     st.set_page_config(page_title="Web Application", page_icon=":bulb:", layout=st.session_state['layout_preference'])
+
 def create_session():
     return Session.builder.configs(st.secrets["snowflake"]).create()
 
@@ -88,6 +92,7 @@ if(status=='External Stage(S3)'):
         df_sql_select = session.sql(sql_select).collect()
         #st.write(df_sql_select)
         dataframe_select = st.dataframe(df_sql_select)
+        record_slider = st.sidebar.slider("How many records you wanted to see :",0,100,10)
 
         #Column Names
         sql_columns = f"select column_name from information_schema.columns where table_name = '{table_name}' and table_schema = 'ATLAS';"
@@ -100,7 +105,7 @@ if(status=='External Stage(S3)'):
         
         #Multiselect
         st.subheader("Data Profiling")
-        st.caption('Please select any one column')
+        st.caption('Please select any columns from the sidebar :')
         #@st.cache
         #column_names = st.multiselect('Please select any column:',df_sql_columns)
         #st.write("Selected Columns : ",column_names)
@@ -109,6 +114,7 @@ if(status=='External Stage(S3)'):
 
         #Checkbox
         #Function to create checkbox
+        #st.cache_data.clear()
         def checkbox_container(data):
             #select_column_box = st.text_input('Please select any column')
             cols = st.columns(5)
@@ -120,8 +126,9 @@ if(status=='External Stage(S3)'):
                 for i in data['COLUMN_NAME']:
                     st.session_state['dynamic_checkbox_' + i] = False
                 st.experimental_rerun()
+            st.sidebar.caption("Column Names :")
             for i in data['COLUMN_NAME']:
-                	st.checkbox(i, key='dynamic_checkbox_' + i)
+                st.sidebar.checkbox(i, key='dynamic_checkbox_' + i)
 
         #Function to print selected columns    
         def get_selected_checkboxes():
@@ -134,12 +141,37 @@ if(status=='External Stage(S3)'):
         selected_column = get_selected_checkboxes()
 
         for values in selected_column:
-            st.write(values)
-        #sql query to preview the data for selected columns
-        select_sql = f"select {values} from {table_name} limit 5"
-        collect_select_sql = session.sql(select_sql).collect()
-        df_select_sql = pd.DataFrame(collect_select_sql)
-        st.write(df_select_sql)
+            #sql query to preview the data for selected columns
+            # to show the distinct records
+            select_sql = f"select distinct {values} from {table_name}"
+            collect_select_sql = session.sql(select_sql).collect()
+            df_select_sql = pd.DataFrame(collect_select_sql)
+            st.write(df_select_sql)
+
+        col1, col2 = st.columns(2)
+        try:
+            with col1:
+                st.header("Distinct Record")
+                select_sql = f"select distinct {values} from {table_name}"
+                collect_select_sql = session.sql(select_sql).collect()
+                df_select_sql = pd.DataFrame(collect_select_sql)
+                st.write(df_select_sql)
+
+            with col2:
+                st.header("Counts")
+                count_sql = f"select {values},count(*) as Total from {table_name} group by {values}"
+                collect_count_sql = session.sql(count_sql).collect()
+                df_count_sql = pd.DataFrame(collect_count_sql)
+                st.write(df_count_sql)
+
+        except : 
+            st.write("No columns selected")    
+
+        
+            
+            
+
+
         
 
        
