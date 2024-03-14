@@ -6,6 +6,7 @@ import snowflake.connector
 from urllib.error import URLError
 import streamlit as st
 from snowflake.snowpark.context import get_active_session
+from datetime import date, timedelta,datetime
 
 st.set_page_config(
     page_title="Saama's Global Hackthon",
@@ -18,7 +19,7 @@ def create_session():
     return Session.builder.configs(st.secrets["snowflake"]).create()
 session = create_session()
 
-col1, col2,col3 = st.columns(3)
+col1, col2,col3 = st.columns((2,1,1))
 
 with col1:
     st.image('saama_logo.jpg',width = 150)
@@ -29,7 +30,9 @@ with col2:
 with col3:
     st.header("Hackathon 2024")
 
-st.markdown("""<hr style="height:2px;border:none;color:#1E90FF;background-color:#1E90FF;" /> """, unsafe_allow_html=True)
+#show blue line
+st.markdown("""<hr style="height:2px;border:none;color:#1E96DE;background-color:#1E96DE;" /> """, unsafe_allow_html=True)
+
 # Write directly to the app
 st.header("Simple Data Management Application using Snowflake, Streamlit, SnowPark")
 
@@ -60,14 +63,17 @@ if(status=='External Stage(S3)'):
     #session = get_active_session()
     st.subheader("External Stage Files:")
     sql = "LIST @STORE_DB.ATLAS.AWS_S3_STG;"
-    df = session.sql(sql).collect()
-    st.dataframe(data=df,use_container_width=True)
+    df_collect = session.sql(sql).collect()
+    df = pd.DataFrame(df_collect)
+    #TO display the headers in bold
+    st.markdown(df.to_html(escape=False),unsafe_allow_html=True)
+    #st.dataframe(data=df,use_container_width=True)
 
     #files = st.selectbox("Please select any one file from the below list",(df))
 
     sql_filename = "select distinct METADATA$FILENAME from @STORE_DB.ATLAS.AWS_S3_STG"
     df_filename = session.sql(sql_filename).collect()
-    files = st.selectbox("Please select any one file from the below list",(df_filename))
+    files = st.selectbox("Please select any one file from the below options",(df_filename), index=None)
 
     #Write directly to the app
     if 'clicked' not in st.session_state:
@@ -94,6 +100,7 @@ if(status=='External Stage(S3)'):
         df_sql_select = session.sql(sql_select).collect()
         dataframe_select = pd.DataFrame(df_sql_select)
         #st.write(dataframe_select)
+        #st.markdown(dataframe_select.to_html(escape=False),unsafe_allow_html=True)
 
         # Show data
         @st.cache_data(show_spinner=False)
@@ -172,41 +179,58 @@ if(status=='External Stage(S3)'):
                 appended_data.append(df_select_sql) 
             df2 = pd.concat(appended_data, axis=1,ignore_index=True)
             df2.columns = selected_column
-            st.write(df2)
+            st.markdown(df2.to_html(escape=False),unsafe_allow_html=True)
         except:
             st.write("Please select any one column from the sidebar checkbox")
 
-         
-        # col1, col2 = st.columns(2)
-        # try:
-        #     with col1:
-        #         st.header("Distinct Record")
-        #         select_sql = f"select distinct {values} from {table_name}"
-        #         collect_select_sql = session.sql(select_sql).collect()
-        #         df_select_sql = pd.DataFrame(collect_select_sql)
-        #         st.write(df_select_sql)
+        # df4 = pd.DataFrame(df2)
+        # st.write(df4.describe(include=all))
 
-        #     with col2:
-        #         st.header("Counts")
-        #         count_sql = f"select {values},count(*) as Total from {table_name} group by {values}"
-        #         collect_count_sql = session.sql(count_sql).collect()
-        #         df_count_sql = pd.DataFrame(collect_count_sql)
-        #         st.write(df_count_sql)
-        # except:
-        #     st.write("No columns selected")  
+        st.subheader("You can edit the below dataframe")
+        #edited_df = st.data_editor(dataframe_select)
 
-        # null_sql = f"select 'Null count' as NULL_COUNT, (select count(*) from mocked_speaker_data where upper({values}) = 'NAN') as COUNT"
-        # collect_null_sql = session.sql(null_sql).collect()
-        # df_null_sql = pd.DataFrame(collect_null_sql)
-        # st.write(collect_null_sql)
-
-        #query for dtype
-        # desc = dataframe_select.describe(include="all")
-        # st.write(desc.transpose())
-
-        edited_df = st.data_editor(dataframe_select)
-            
+        #Data Ingestion into snowflake based on user selection
+        with st.expander("Data Ingestion into Snowflake"):
+            st.subheader("Data Ingestion into Snowflake")
         
+            #Function to create a dataframe which contains the user selected data
+            def dataframe_with_selections(dataset):
+                df_with_selections = dataset.copy()
+                df_with_selections.insert(0, "Select", False)
+
+                # Get dataframe row-selections from user with st.data_editor
+                edited_df = st.data_editor(
+                    df_with_selections,
+                    hide_index=True,
+                    column_config={"Select": st.column_config.CheckboxColumn(required=True)},
+                    disabled=dataset.columns,
+                )
+
+                # Filter the dataframe using the temporary column, then drop the column
+                selected_rows = edited_df[edited_df.Select]
+                return selected_rows.drop('Select', axis=1)
+
+            #call the function dataframe_with_selection
+            selection = dataframe_with_selections(dataframe_select)
+            st.write("Your selection:")
+            st.write(selection)
+            #adding datetime to the dataframe 
+            today = datetime.today()
+            selection['LOAD_DATE']=pd.to_datetime(today)
+            selection['LOAD_DATE'] =selection['LOAD_DATE'].dt.strftime("%Y-%m-%d %H:%M:%S")
+            #st.write(selection.dtypes)
+            #st.write(selection)
+            submit_button = st.button('❄️ Ingest Data into Snowflake')
+            if submit_button:
+                with st.spinner("Making snowflakes..."):
+                    column_names=selection.columns
+                    insert_df=pd.DataFrame(selection, columns=column_names)
+                    session.write_pandas(insert_df, f"{table_name}_FINAL")  
+                    st.success("Loaded the requested data Successfully")
+        st.session_state["expander_state"] = False  
+        with st.expander("Data Ingestion into Snowflake 2"):
+
+            st.write("Hello")
 
 
         
