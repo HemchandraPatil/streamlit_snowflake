@@ -9,6 +9,7 @@ from snowflake.snowpark.context import get_active_session
 from datetime import date, timedelta,datetime
 from streamlit_option_menu import option_menu
 import numpy as np
+import time
 
 
 st.set_page_config(
@@ -36,38 +37,42 @@ def create_session():
     return Session.builder.configs(st.secrets["snowflake"]).create()
 session = create_session()
 
-col1, col2,col3 = st.columns((3))
+col1, col2 = st.columns((1,2))
 
 with col1:
     st.image('saama_logo.jpg',width = 150)
 
 with col2:
-    st.header("Saama Thunder's")
+    st.title("👨‍💻Saama Global Hackathon 2024")
 
-with col3:
-    st.header("Hackathon 2024")
+# with col3:
+#     st.title("Saama Thunders")
 
 #show blue line
 st.markdown("""<hr style="height:2px;border:none;color:#1E96DE;background-color:#1E96DE;" /> """, unsafe_allow_html=True)
 
 if selected == 'Home':
     # Write directly to the app
-    st.title("Simple Data Management Application using Snowflake, Streamlit, SnowPark")
-    subject = "The task involves developing a user-friendly data management application utilizing Snowflake, Streamlit, and Snowpark. Users can select a Snowflake data stage, view files within an Internal/External(S3 bucket) and preview file contents. The app allows users to select specific columns for data profiling, and then select and insert one or more rows of data into a database."
+    st.title("⚡️Team Saama Thunder")
+    
+    st.header("Simple Data Management Application using Snowflake, Streamlit, SnowPark")
+    #subject = "The task involves developing a user-friendly data management application utilizing Snowflake, Streamlit, and Snowpark. Users can select a Snowflake data stage, view files within an Internal/External(S3 bucket) and preview file contents. The app allows users to select specific columns for data profiling, and then select and insert one or more rows of data into a database."
     st.markdown("""
     <style>
     .big-font {
-        font-size:20px !important;
+        font-size:16px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<p class="big-font">The task involves developing a user-friendly data management application utilizing Snowflake, Streamlit, and Snowpark. Users can select a Snowflake data stage, view files within an Internal/External(S3 bucket) and preview file contents. The app allows users to select specific columns for data profiling, and then select and insert one or more rows of data into a database</p>', unsafe_allow_html=True)
-
+    st.markdown('<p class="big-font">Our solution involves developing a user-friendly Data Management application that can help preview the data available in your cloud storage and evaluate data quality before taking it ahead for further data processing. The solution is built on Modern Data Platform and utilizes the power of Snowflake features such as  Streamlit and Snowpark.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">We have used AWS as the cloud environment from where users can select a file from an S3 bucket. This application also allows users to select specific columns for data profiling and then select and insert one or more rows of data into a Snowflake tables. With a bit of Python programming, we have tried to optimize the Snowflake usage and kept it to a minimum to enable less credit usage.</p>', unsafe_allow_html=True)
 if selected == 'Data Browser':
-    bottom_menu_1 = st.columns((4,1,1))
-    with bottom_menu_1[0]:
-        st.button("Help",help="""1. Stage raw files on AWS S3 (preferably structured or semi-structured) using AWS Platform \n 2. Build a Streamlit Data to support the following: \n a) List Snowflake Data Stages and choose a stage\n b) List files on the S3 bucket (show file properties)\n c) Select a File and Preview the contents of the file in a tabular / grid format\n d) Allow the user to choose a column & profile the data (Streamlit <> Python, Pandas), show results\n e) Allow user to select one or more or all rows & ingest the data in a database table (Snowflake > Python Pandas > Ingest)""")
+    #bottom_menu_1 = st.columns((4,1,1))
+    #with bottom_menu_1[0]:
+    with st.expander("Help"):
+        st.write("1. Stage raw files on AWS S3 (preferably structured or semi-structured) using AWS Platform \n 2. Build a Streamlit Data to support the following: \n a) List Snowflake Data Stages and choose a stage\n b) List files on the S3 bucket (show file properties)\n c) Select a File and Preview the contents of the file in a tabular / grid format\n d) Allow the user to choose a column & profile the data (Streamlit <> Python, Pandas), show results\n e) Allow user to select one or more or all rows & ingest the data in a database table (Snowflake > Python Pandas > Ingest)")
+        #st.button("Help",help="""1. Stage raw files on AWS S3 (preferably structured or semi-structured) using AWS Platform \n 2. Build a Streamlit Data to support the following: \n a) List Snowflake Data Stages and choose a stage\n b) List files on the S3 bucket (show file properties)\n c) Select a File and Preview the contents of the file in a tabular / grid format\n d) Allow the user to choose a column & profile the data (Streamlit <> Python, Pandas), show results\n e) Allow user to select one or more or all rows & ingest the data in a database table (Snowflake > Python Pandas > Ingest)""")
     with st.container(border=True):
         status = st.radio("Select One Stage: ", ('Internal Satge', 'External Stage(S3)'),index=None)
 
@@ -92,12 +97,11 @@ if selected == 'Data Browser':
             sql = "LIST @STORE_DB.ATLAS.AWS_S3_STG;"
             df_collect = session.sql(sql).collect()
             df = pd.DataFrame(df_collect)
+            #dropping the column 'mdf' 
+            df = df.drop(['md5'],axis=1)
             #TO display the headers in bold
             st.write(df)
             #st.markdown(df.to_html(escape=False),unsafe_allow_html=True)
-            #st.dataframe(data=df,use_container_width=True)
-
-        #files = st.selectbox("Please select any one file from the below list",(df))
 
         sql_filename = "select distinct METADATA$FILENAME from @STORE_DB.ATLAS.AWS_S3_STG"
         df_filename = session.sql(sql_filename).collect()
@@ -262,7 +266,7 @@ if selected == 'Data Browser':
                     with st.spinner("Making snowflakes..."):
                         column_names=selection.columns
                         insert_df=pd.DataFrame(selection, columns=column_names)
-                        session.write_pandas(insert_df, f"{table_name}_FINAL")  
+                        session.write_pandas(insert_df, f"{table_name}_STG")  
                         st.success("Loaded the requested data Successfully")
             
 #st.session_state.clicked = False 
@@ -273,7 +277,7 @@ if selected == 'Data Browser':
 #Footer
 footer="""<style>
 a:link , a:visited{
-color: #FFFFFF;
+color: #000000;
 background-color: transparent;
 text-decoration: underline;
 }
@@ -288,7 +292,7 @@ text-align: center;
 }
 </style>
 <div class="footer">
-<p>© Copyright 2024 Saama Technologies LLC. All Rights Reserved. Privacy Policy <a style='display: block; text-align: center;</a></p>
+<p>© Copyright 2024 Saama Technologies LLC. All Rights Reserved. Privacy Policy <a style='display: block; text-align: center;color: #000000;</a></p>
 </div>
 """
 st.markdown(footer,unsafe_allow_html=True)      
